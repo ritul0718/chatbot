@@ -1,8 +1,12 @@
 import streamlit as st
+from dotenv import load_dotenv
+import pickle
 from PyPDF2 import PdfReader
 from streamlit_extras.add_vertical_space import add_vertical_space
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
+import os
 
 # Sidebar contents
 with st.sidebar:
@@ -17,6 +21,8 @@ with st.sidebar:
     ''')
     add_vertical_space(5)
     st.write('Made with ❤️')
+
+load_dotenv()
 
 
 def main():
@@ -40,6 +46,23 @@ def main():
             )
         chunks = text_splitter.split_text(text=text)
         st.write(chunks)
+
+        # # embeddings
+        store_name = pdf.name[:-4]
+        st.write(f'{store_name}')
+        
+
+        if os.path.exists(f"{store_name}.pkl"):
+            with open(f"{store_name}.pkl", "rb") as f:
+                VectorStore = pickle.load(f)
+            # st.write('Embeddings Loaded from the Disk')s
+        else:
+            embeddings = OpenAIEmbeddings()
+            VectorStore = FAISS.from_texts(chunks, embedding=embeddings)
+            with open(f"{store_name}.pkl", "wb") as f:
+                pickle.dump(VectorStore, f)
+                
+        # st.write(chunks)        
 
         # st.write(text)
 
